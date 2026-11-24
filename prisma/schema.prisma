@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./local.db"
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  location    String
+  description String
+  price       Int
+  bedrooms    Int?
+  bathrooms   Int?
+  areaSqm     Int?
+  createdAt   DateTime      @default(now())
+  slots       ShowingSlot[]
+  photos      ListingPhoto[]
+}
+
+model ListingPhoto {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  position  Int
+  mimeType  String
+  data      Bytes
+
+  @@unique([listingId, position])
+}
+
+model ShowingSlot {
+  id        String   @id @default(cuid())
+  startAt   DateTime
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  booking   Booking?
+
+  @@unique([listingId, startAt])
+  @@index([startAt])
+}
+
+model Booking {
+  id        String      @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  canceledBySellerAt DateTime?
+  createdAt DateTime    @default(now())
+  slotId    String      @unique
+  slot      ShowingSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+}
+
+model SellerSession {
+  tokenHash String   @id
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
